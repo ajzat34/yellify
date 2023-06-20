@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital@0;1&display=swap" rel="stylesheet">
+</head>
+<body data-bs-theme="dark">
+    <div class="container">
+        <h1>ＹＥＬＬＩＦＹ</h1>
+
+        <h5>Input</h5>
+        <div class="container-fluid mb-4">
+            <label for="text">Text: </label>
+            <input id="text" type="text" oninput="updateView()" placeholder="Your Message Here!!!" value="" class="form-control">
+        </div>
+        <h5>Result</h5>
+        <div class="container-fluid mb-4">
+            <div id="out" class="border p-2 rounded"></div>
+        </div>
+        <h5>Result (alt)</h5>
+        <div class="container-fluid mb-4 font-monospace">
+            <div id="out-alt" class="border p-2 rounded"></div>
+        </div>
+
+        <h5>Options</h5>
+        <div class="container-fluid mb-4">
+            <div class="row mb-2">
+                <div class="col-md">
+                    <div class="">
+                        <label for="spaces">Spaces</label>
+                        <input type="checkbox" name="spaces" id="spaces" checked onchange="updateView()"><br>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="">
+                        <label for="fullwidth">ＦＵＬＬ　ＷＩＤＴＨ</label>
+                        <input type="checkbox" name="fullwidth" id="fullwidth" checked onchange="updateView()"><br>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="">
+                        <label for="caps">Caps</label>
+                        <input type="checkbox" name="caps" id="caps" onchange="updateView()"><br>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input id="above" name="above" type="text" oninput="updateView()" placeholder="above" value="⬇️" class="form-control"><br>
+                        <label for="above">Above</label>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input id="below" name="below" type="text" oninput="updateView()" placeholder="below" value="⬆️" class="form-control"><br>
+                        <label for="below">Below</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input id="above-alt" name="above-alt" type="text" oninput="updateView()" placeholder=":above:" value=":arrow_down:" class="form-control"><br>
+                        <label for="above-alt">Above (alt)</label>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input id="below-alt" name="below-alt" type="text" oninput="updateView()" placeholder=":below:" value=":arrow_up:" class="form-control"><br>
+                        <label for="below-alt">Below (alt)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="form-floating">
+                        <select class="form-select" id="font-select" onchange="updateFont()">
+                            <option value="unset" selected>Default</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="monospace">Code Block</option>
+                        </select>
+                        <label for="font-select">Font</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const span = (str) => {
+            const el = document.createElement('span');
+            el.appendChild(document.createTextNode(str));
+            el.appendChild(document.createElement('br'));
+            return el;
+        }
+
+        const shiftCharCode = x => c => String.fromCharCode(c.charCodeAt(0) + x);
+        const toFullWidth = str => str.replace(/[!-~]/g, shiftCharCode(0xFEE0));
+        const toHalfWidth = str => str.replace(/[！-～]/g, shiftCharCode(-0xFEE0));
+
+        function update(str, count) {
+            if (document.getElementById('caps').checked) {
+                str = str.toUpperCase();
+            }
+            if (document.getElementById('fullwidth').checked) {
+                str = toFullWidth(str.replaceAll(' ', '　'));
+            }
+            const space = document.getElementById('spaces').checked ? ' ':'';
+            const DOWN = document.getElementById('above').value + space;
+            const UP = document.getElementById('below').value + space;
+
+            const beforeEL = span(DOWN.repeat(count));
+            const textEL = span(str);
+            const afterEL = span(UP.repeat(count));
+            
+            document.getElementById('out').replaceChildren(beforeEL,textEL,afterEL);
+
+            const beforeWidth = beforeEL.getBoundingClientRect().width;
+            const textWidth = textEL.getBoundingClientRect().width;
+
+            {
+                const space = document.getElementById('spaces').checked ? ' ':'';
+                const DOWN = document.getElementById('above-alt').value + space;
+                const UP = document.getElementById('below-alt').value + space;
+
+                const beforeEL = span(DOWN.repeat(count));
+                const textEL = span(str);
+                const afterEL = span(UP.repeat(count));
+
+                document.getElementById('out-alt').replaceChildren(beforeEL,textEL,afterEL);
+            }
+
+            return [beforeWidth, textWidth, Math.abs(beforeWidth - textWidth)];
+        }
+
+        function size(str, count = 0, oldDist = Infinity) {
+            const [x, width, currentDist] = update(str, count+1);
+
+            if (count > 1000) return;
+
+            if (oldDist < currentDist) {
+                update(str, count);
+            } else {
+                size(str, count+1, currentDist);
+            }
+        }
+
+        function updateFont() {
+            const font = document.getElementById('font-select').value;
+            const el = document.getElementById('out');
+            console.log(font);
+            el.style.fontFamily = font;
+        }
+
+        function updateView() {
+            updateFont();
+            size(document.getElementById('text').value  || document.getElementById('text').placeholder);
+        }
+        updateView();
+    </script>
+</body>
+</html>
